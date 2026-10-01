@@ -26,6 +26,44 @@ jobs:
           ${{ secrets.CEA_CONF }}
           CEAEOF
 
+      - name: Patch core
+        run: |
+          GLOBAL_ROOT="$(npm root -g)"
+          CORE_FILE="$GLOBAL_ROOT/cea/node_modules/@ceajs/core/lib/src/conf.js"
+          node - "$CORE_FILE" <<'PATCH_EOF'
+          const fs = require('fs');
+          const file = process.argv[2];
+          let src = fs.readFileSync(file, 'utf8');
+          const start = src.indexOf('export async function getSchoolInfos');
+          if (start === -1) { console.error('getSchoolInfos not found'); process.exit(1); }
+          const endMark = 'return schoolInfos;';
+          const tail = src.indexOf(endMark, start);
+          if (tail === -1) { console.error('end mark not found'); process.exit(1); }
+          const end = src.indexOf('\n}', tail + endMark.length);
+          if (end === -1) { console.error('closing brace not found'); process.exit(1); }
+          const replacement = [
+            "export async function getSchoolInfos({ users, localEdgeCasesFile, }) {",
+            "    const schoolInfos = {};",
+            "    for (const abbreviation of new Set(users.map((e) => e.school))) {",
+            "        schoolInfos[abbreviation] = {",
+            "            defaultAddr: '',",
+            "            preAuthURL: 'https://xacxxy.campusphere.net/portal/login',",
+            "            loginURL: 'https://xacxxy.campusphere.net/iap/doLogin',",
+            "            chineseName: '延安大学西安创新学院',",
+            "            captchaAuthMode: 0,",
+            "            authOrigin: 'https://xacxxy.campusphere.net/iap',",
+            "            isCloud: true,",
+            "            edgeCase: { getLtPath: '/security/lt', getCaptchaPath: '/generateCaptcha', submitCaptchakey: 'captcha' },",
+            "        };",
+            "    }",
+            "    return schoolInfos;",
+            "}",
+          ].join('\n');
+          src = src.slice(0, start) + replacement + src.slice(end + 2);
+          fs.writeFileSync(file, src);
+          console.log('patched ok');
+          PATCH_EOF
+
       - name: Load config
         run: cea load conf.toml
 
