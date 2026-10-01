@@ -18,8 +18,7 @@ jobs:
 
       - name: Install cea
         run: |
-          npm i -g cea
-          npm i -g cheerio@1.0.0
+          npm i -g cea@2.5.8 cheerio@1.0.0-rc.12
 
       - name: Write conf.toml
         run: |
