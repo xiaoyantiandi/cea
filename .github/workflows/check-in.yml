@@ -2,7 +2,7 @@ name: cea-auto-check-in
 
 on:
   schedule:
-    - cron: '0 22 * * *'
+    - cron: '30 13 * * *'
   workflow_dispatch:
 
 jobs:
