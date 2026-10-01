@@ -1,0 +1,32 @@
+name: cea-auto-check-in
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-in:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install cea
+        run: npm i -g cea
+
+      - name: Write conf.toml
+        run: |
+          cat > conf.toml <<'CEAEOF'
+          ${{ secrets.CEA_CONF }}
+          CEAEOF
+
+      - name: Load config
+        run: cea load conf.toml
+
+      - name: Check in
+        run: cea sign
